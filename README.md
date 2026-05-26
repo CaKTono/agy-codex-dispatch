@@ -88,11 +88,12 @@ All commands are namespaced per plugin: `/agy:<name>`, `/cx:<name>`, `/dispatch:
 
 #### `/agy:setup`
 
-Runs health checks for the `agy` CLI and its network path to Google. Reports a ✓/✗ punch list with suggested fixes on failure. Optionally probes mihomo-specific TUN routing if mihomo is detected on the host.
+Runs health checks for the `agy` CLI and its network path to Google. Reports a ✓/✗ punch list with suggested fixes on failure.
 
 - **Arguments:** none
-- **What it checks:** binary present → version → Google OAuth reachability → eligibility endpoint. Mihomo TUN routing + fake-IP DNS are checked only if mihomo is detected.
+- **What it checks:** binary present → version → Google OAuth reachability → eligibility endpoint.
 - **Output shape:** one line per check (`✓` / `✗` + name + one-line reason), then a single suggestion line if anything failed, or `All clear — try /agy:task to delegate work.` if everything passed.
+- **Network failure hints:** if the OAuth probe returns SSL "unexpected EOF" or HTTP `000`, the most common cause is an outbound proxy/VPN whose exit IP is being blocked by Google's anti-abuse — switch exits or disable the proxy for `*.googleapis.com` and retry.
 
 #### `/agy:task [--continue] <prompt>`
 
