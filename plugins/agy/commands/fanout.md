@@ -28,13 +28,13 @@ After parsing, you have an ordered list of N task strings. If N > 6, ask the use
 
 ## Dispatch
 
-Invoke the `Skill` tool first to load `agy:parallel-agy-dispatch`. Follow its guidance for prompt construction:
+Construct each task prompt with these properties:
 
-- Make each task string self-contained.
-- Bake any desired output shape into the task string itself.
-- Do not add meta-commentary — the subagent is a forwarder.
+- Self-contained — the agy subagent sees zero session context, so inline anything it needs.
+- Bake any desired output shape (length, format, JSON, etc.) into the task string itself.
+- Do not add meta-commentary — the subagent is a forwarder, not a reasoner.
 
-Then in a **single response message**, issue **N parallel** `Agent` tool calls:
+In a **single response message**, issue **N parallel** `Agent` tool calls:
 
 ```
 Agent(subagent_type: "agy:agy-task", description: "<short label for task i>", prompt: "<task i>")

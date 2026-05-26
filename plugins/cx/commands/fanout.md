@@ -45,14 +45,14 @@ After parsing, you have an ordered list of N task strings. If N > 4, ask the use
 
 ## Dispatch
 
-Invoke the `Skill` tool first to load `cx:parallel-codex-dispatch`. Follow its guidance for prompt construction:
+Construct each task prompt with these properties:
 
-- Make each task string self-contained — codex sees zero session context.
-- Bake the desired output shape into the task string itself.
+- Self-contained — codex sees zero session context, so inline anything it needs.
+- Bake the desired output shape (length, format, JSON, etc.) into the task string itself.
 - Each task is a **fresh thread** — append the literal token `--fresh` to every forwarded prompt so codex-rescue does not resume a prior thread.
 - Prefer foreground execution (do not add `--background`) so this command can aggregate outputs in one response.
 
-Then in a **single response message**, issue **N parallel** `Agent` tool calls:
+In a **single response message**, issue **N parallel** `Agent` tool calls:
 
 ```
 Agent(subagent_type: "codex:codex-rescue", description: "<short label for task i>", prompt: "<task i> --fresh")

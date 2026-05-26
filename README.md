@@ -6,9 +6,23 @@ Three small Claude Code plugins that work together to make **multi-model dispatc
 |---|---|---|
 | **agy** | `/agy:setup`, `/agy:task`, `/agy:fanout`, `/agy:status`, `/agy:model` — wraps the [Antigravity](https://antigravity.google) (`agy`) CLI. | `agy` binary on `$PATH` |
 | **cx** | `/cx:fanout` — fans out N tasks to OpenAI's `codex:codex-rescue` in parallel. | OpenAI's [codex plugin](https://github.com/openai/codex-plugin-cc) |
-| **dispatch** | `/dispatch:fanout` + auto-loading skill — explicit per-task routing via `[agy]` / `[codex]` / `[claude]` / `[gemini]` tags. | nothing required; recognized tags need their respective plugins installed |
+| **dispatch** | `/dispatch:fanout` — explicit per-task routing via `[agy]` / `[codex]` / `[claude]` / `[gemini]` tags. | nothing required; recognized tags need their respective plugins installed |
 
 You can install **any subset**. Each plugin is self-contained and only references siblings as optional companions.
+
+---
+
+## Prerequisites
+
+Each plugin wraps an external CLI. Install the corresponding tool **before** installing the plugin, and run the tool's `login` / interactive flow once so the OAuth tokens are cached.
+
+| Plugin | External CLI required | Install / docs |
+|---|---|---|
+| `agy` | Antigravity CLI (`agy` on `$PATH`) | https://antigravity.google/product/antigravity-cli |
+| `cx` | OpenAI Codex CLI (`codex` on `$PATH`) **and** OpenAI's [`codex` plugin for Claude Code](https://github.com/openai/codex-plugin-cc) | https://developers.openai.com/codex/cli |
+| `dispatch` | No CLI prereq of its own. Tags only dispatch if the respective plugin is installed (see [Optional companions](#optional-companions) below). | — |
+
+Without the listed CLI installed and authenticated, the corresponding plugin's commands will fail with a clear error pointing here.
 
 ---
 
@@ -60,7 +74,7 @@ These plugins are designed to **compose with** — but do not require — other 
 
 | Companion | What it provides | Used by |
 |---|---|---|
-| [`superpowers`](https://github.com/obra/superpowers-marketplace) | `superpowers:dispatching-parallel-agents` — the parent "when to fan out at all" discipline. | All three plugins compose with it; none require it. Skills here name-drop it as related reading. |
+| [`superpowers`](https://github.com/obra/superpowers-marketplace) | `superpowers:dispatching-parallel-agents` — the parent "when to fan out at all" discipline. | Optional. Not required by any plugin here; useful related reading on parallel dispatch. |
 | [`codex` (OpenAI)](https://github.com/openai/codex-plugin-cc) | `codex:codex-rescue` subagent. | **Required by `cx`.** Also used by `dispatch` when you tag a task `[codex]`. |
 | [`cc-gemini-plugin`](https://github.com/thepushkarp/cc-gemini-plugin) | `cc-gemini-plugin:gemini-agent` subagent. | Only used by `dispatch` when you tag a task `[gemini]`. |
 
@@ -177,16 +191,6 @@ Header in the aggregate looks like `Dispatched 4 tasks (1 agy, 1 codex, 1 claude
 
 ---
 
-## Skills (auto-loaded)
-
-These don't require user invocation — they activate automatically when Claude notices the situation matches the trigger.
-
-| Skill | Activates when | Purpose |
-|---|---|---|
-| `agy:parallel-agy-dispatch` | 2+ independent tasks suit agy (web/research/long-context summarization) | Tells Claude how to fan out agy tasks. Composes with `superpowers:dispatching-parallel-agents`. |
-| `cx:parallel-codex-dispatch` | 2+ independent tasks suit Codex (substantial refactors, deeper debugging, second-opinion implementation) | Tells Claude how to fan out codex-rescue calls with `--fresh` per task. |
-| `dispatch:explicit-dispatch` | Your message contains tagged tasks (`[agy]`, `[codex]`, etc.) — even in plain prose, no slash command needed | Parses tags and dispatches per the user's chosen targets without overriding the routing. |
-
 ## Subagents
 
 | Subagent | Purpose |
@@ -203,24 +207,23 @@ Each plugin is a directory under `plugins/` with this shape:
 plugins/<plugin>/
 ├── .claude-plugin/plugin.json     ← manifest: name, version, description, license
 ├── commands/<name>.md             ← becomes /<plugin>:<name> slash command
-├── agents/<name>.md               ← defines a subagent invocable via the Agent tool
-└── skills/<name>/SKILL.md         ← auto-loadable skill — Claude loads it when its
-                                     description matches the current situation
+└── agents/<name>.md               ← defines a subagent invocable via the Agent tool
 ```
 
 What each directory is for:
 
 - **`commands/*.md`** — slash commands. The filename (minus `.md`) becomes the command name (`commands/setup.md` → `/<plugin>:setup`). YAML frontmatter declares the command's description, allowed tools, and argument hint; the body is the instruction Claude follows when the command runs. The token `$ARGUMENTS` interpolates whatever the user typed after the command, and `${CLAUDE_PLUGIN_ROOT}` resolves to the plugin's install directory.
 - **`agents/*.md`** — subagent definitions. Frontmatter declares the subagent's name and which tools it can use; the body is its behavior spec. Other commands invoke them via the `Agent` tool with `subagent_type: "<plugin>:<name>"`. They run in isolated context, separate from the main session.
-- **`skills/<name>/SKILL.md`** — auto-loadable skills. The frontmatter's `description` field is what triggers Claude to load the skill when the situation matches (e.g., the `dispatch:explicit-dispatch` skill triggers when a user message contains `[agy]`/`[codex]`/etc. tags). The body is the guidance Claude follows.
+
+> **Note:** these plugins intentionally ship **no auto-loadable skills** (`skills/<name>/SKILL.md`). All behavior is driven by explicit slash commands so nothing imposes opinions on Claude's default behavior. You can still add skills yourself in a fork — Claude Code will discover any `skills/<name>/SKILL.md` it finds.
 
 These `.md` files are the source of truth — if this README and a `.md` ever disagree, the `.md` wins.
 
 | Plugin | What's inside |
 |---|---|
-| [plugins/agy/](plugins/agy/) | 5 commands (`setup`, `task`, `fanout`, `status`, `model`), 1 agent (`agy-task`), 1 skill (`parallel-agy-dispatch`) |
-| [plugins/cx/](plugins/cx/) | 1 command (`fanout`), 1 skill (`parallel-codex-dispatch`) |
-| [plugins/dispatch/](plugins/dispatch/) | 1 command (`fanout`), 1 skill (`explicit-dispatch`) |
+| [plugins/agy/](plugins/agy/) | 5 commands (`setup`, `task`, `fanout`, `status`, `model`), 1 agent (`agy-task`) |
+| [plugins/cx/](plugins/cx/) | 1 command (`fanout`) |
+| [plugins/dispatch/](plugins/dispatch/) | 1 command (`fanout`) |
 
 ---
 
