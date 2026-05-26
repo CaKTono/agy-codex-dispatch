@@ -1,0 +1,43 @@
+{
+  "name": "caktono-plugins",
+  "owner": {
+    "name": "CaKTono",
+    "url": "https://github.com/CaKTono"
+  },
+  "metadata": {
+    "description": "Multi-model dispatch plugins for Claude Code: Antigravity (agy), Codex parallel fan-out (cx), and explicit per-task routing (dispatch).",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "agy",
+      "description": "Use Antigravity (agy CLI) from Claude Code: setup checks, task delegation, status, model probe, and parallel fan-out.",
+      "version": "0.1.0",
+      "author": {
+        "name": "CaKTono",
+        "url": "https://github.com/CaKTono"
+      },
+      "source": "./plugins/agy"
+    },
+    {
+      "name": "cx",
+      "description": "Extras around the codex plugin: parallel fan-out via codex-rescue.",
+      "version": "0.1.0",
+      "author": {
+        "name": "CaKTono",
+        "url": "https://github.com/CaKTono"
+      },
+      "source": "./plugins/cx"
+    },
+    {
+      "name": "dispatch",
+      "description": "Explicit per-task agent routing: user picks the dispatch target per task, then fan out in parallel.",
+      "version": "0.1.0",
+      "author": {
+        "name": "CaKTono",
+        "url": "https://github.com/CaKTono"
+      },
+      "source": "./plugins/dispatch"
+    }
+  ]
+}

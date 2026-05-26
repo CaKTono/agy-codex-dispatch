@@ -1,0 +1,11 @@
+{
+  "name": "cx",
+  "version": "0.1.0",
+  "description": "Extras around the codex plugin: parallel fan-out via codex-rescue.",
+  "author": {
+    "name": "CaKTono",
+    "url": "https://github.com/CaKTono"
+  },
+  "homepage": "https://github.com/CaKTono/claude-plugins/tree/main/plugins/cx",
+  "license": "MIT"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "agy",
+  "version": "0.1.0",
+  "description": "Use Antigravity (agy) from Claude Code: setup checks, task delegation, status, model probe, and parallel fan-out.",
+  "author": {
+    "name": "CaKTono",
+    "url": "https://github.com/CaKTono"
+  },
+  "homepage": "https://github.com/CaKTono/claude-plugins/tree/main/plugins/agy",
+  "license": "MIT"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "dispatch",
+  "version": "0.1.0",
+  "description": "Explicit per-task agent routing: user picks the dispatch target per task, then fan out in parallel.",
+  "author": {
+    "name": "CaKTono",
+    "url": "https://github.com/CaKTono"
+  },
+  "homepage": "https://github.com/CaKTono/claude-plugins/tree/main/plugins/dispatch",
+  "license": "MIT"
+}

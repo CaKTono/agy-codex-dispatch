@@ -1,0 +1,23 @@
+# Editor / OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local environment
+.env
+.env.*
+!.env.example
+*.local
+
+# Claude Code plugin runtime markers
+**/.in_use/
+
+# Build / cache
+node_modules/
+__pycache__/
+*.pyc
+*.log
