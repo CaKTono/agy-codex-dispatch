@@ -5,7 +5,7 @@ Three small Claude Code plugins that work together to make **multi-model dispatc
 | Plugin | What it gives you | Depends on |
 |---|---|---|
 | **agy** | `/agy:setup`, `/agy:task`, `/agy:fanout`, `/agy:status` — wraps the [Antigravity](https://antigravity.google) (`agy`) CLI. | `agy` binary on `$PATH` |
-| **cx** | `/cx:fanout` — fans out N tasks to OpenAI's `codex:codex-rescue` in parallel. | OpenAI's [codex plugin](https://github.com/openai/codex-plugin-cc) |
+| **cx** | `/cx:fanout` — fans out N tasks to the codex CLI in parallel via `cx:cx-task`. | `codex` binary on `$PATH` |
 | **dispatch** | `/dispatch:fanout` — explicit per-task routing via `[agy]` / `[codex]` / `[claude]` / `[gemini]` tags. | nothing required; recognized tags need their respective plugins installed |
 
 You can install **any subset**. Each plugin is self-contained and only references siblings as optional companions.
@@ -19,7 +19,7 @@ Each plugin wraps an external CLI. Install the corresponding tool **before** ins
 | Plugin | External CLI required | Install / docs |
 |---|---|---|
 | `agy` | Antigravity CLI (`agy` on `$PATH`) | https://antigravity.google/product/antigravity-cli |
-| `cx` | OpenAI Codex CLI (`codex` on `$PATH`) **and** OpenAI's [`codex` plugin for Claude Code](https://github.com/openai/codex-plugin-cc) | https://developers.openai.com/codex/cli |
+| `cx` | OpenAI Codex CLI (`codex` on `$PATH`) | https://developers.openai.com/codex/cli (run `codex login` once after install) |
 | `dispatch` | No CLI prereq of its own. Tags only dispatch if the respective plugin is installed (see [Optional companions](#optional-companions) below). | — |
 
 Without the listed CLI installed and authenticated, the corresponding plugin's commands will fail with a clear error pointing here.
@@ -54,7 +54,7 @@ claude plugin install dispatch@caktono-plugins   # explicit per-task routing
 
 Restart Claude Code afterwards.
 
-**Note:** `cx` will not function without OpenAI's `codex` plugin installed. The `dispatch` plugin works alone, but tags like `[codex]` or `[gemini]` only dispatch if those plugins are installed (see below).
+**Note:** `cx` requires the `codex` binary to be installed and authenticated (`codex login`). It does **not** require OpenAI's `codex` plugin for Claude Code — `cx` wraps the codex CLI directly. The `dispatch` plugin works alone, but the `[codex]` tag routes through `cx:cx-task` (so it needs `cx` installed) and `[gemini]` tags need cc-gemini-plugin installed.
 
 ## Local install from a clone
 
@@ -75,7 +75,7 @@ These plugins are designed to **compose with** — but do not require — other 
 | Companion | What it provides | Used by |
 |---|---|---|
 | [`superpowers`](https://github.com/obra/superpowers-marketplace) | `superpowers:dispatching-parallel-agents` — the parent "when to fan out at all" discipline. | Optional. Not required by any plugin here; useful related reading on parallel dispatch. |
-| [`codex` (OpenAI)](https://github.com/openai/codex-plugin-cc) | `codex:codex-rescue` subagent. | **Required by `cx`.** Also used by `dispatch` when you tag a task `[codex]`. |
+| [`codex` (OpenAI)](https://github.com/openai/codex-plugin-cc) | `codex:codex-rescue` subagent and `/codex:*` slash commands. | Optional. **Not required** by `cx` or `dispatch` — both wrap the codex CLI directly. Install only if you want OpenAI's official `/codex:*` commands. |
 | [`cc-gemini-plugin`](https://github.com/thepushkarp/cc-gemini-plugin) | `cc-gemini-plugin:gemini-agent` subagent. | Only used by `dispatch` when you tag a task `[gemini]`. |
 
 ---
@@ -141,9 +141,9 @@ Prints `agy`'s install path, version, and recent activity hints. Brief — under
 
 #### `/cx:fanout <tasks>`
 
-Same input forms as `/agy:fanout`, but every task is routed to `codex:codex-rescue` in parallel. Automatically appends `--fresh` to every prompt so each thread is independent. Performs a one-time preflight check that the codex plugin is installed before dispatching.
+Same input forms as `/agy:fanout`, but every task is routed to `cx:cx-task` (a thin forwarder around `codex exec`) in parallel. Each `codex exec` invocation is a fresh session by default. Performs a one-time preflight (`command -v codex`) to confirm the CLI is on `$PATH`.
 
-**Requires:** OpenAI's codex plugin (`claude plugin marketplace add openai/codex-plugin-cc && claude plugin install codex@openai-codex`).
+**Requires:** OpenAI Codex CLI installed and authenticated (https://developers.openai.com/codex/cli, then `codex login`). Does **not** require OpenAI's codex Claude Code plugin.
 
 ```
 /cx:fanout
@@ -165,7 +165,7 @@ Per-task explicit routing. Each task carries a target tag, and they all dispatch
 | Tag | Routes to | Required plugin |
 |---|---|---|
 | `[agy]` or `agy:` | `agy:agy-task` | agy plugin |
-| `[codex]` or `codex:` | `codex:codex-rescue` (auto-adds `--fresh`) | OpenAI codex plugin |
+| `[codex]` or `codex:` | `cx:cx-task` (wraps `codex exec`) | cx plugin + codex CLI on `$PATH` |
 | `[claude]` or `claude:` | `general-purpose` Claude subagent | none (built-in) |
 | `[gemini]` or `gemini:` | `cc-gemini-plugin:gemini-agent` | cc-gemini-plugin |
 | `[<exact subagent name>]` | the named subagent | that subagent must be registered |
@@ -190,6 +190,7 @@ Header in the aggregate looks like `Dispatched 4 tasks (1 agy, 1 codex, 1 claude
 | Subagent | Purpose |
 |---|---|
 | `agy:agy-task` | Thin forwarder that runs `agy --print '<task>'` and returns its stdout verbatim. Used by `/agy:task` and `/agy:fanout`. Hardened against shell injection: single-quoted prompts only, no `eval`, no double quotes. |
+| `cx:cx-task` | Thin forwarder that runs `codex exec '<task>'` and returns the codex CLI's stdout verbatim. Used by `/cx:fanout` and by `/dispatch:fanout` when a task is tagged `[codex]`. Same shell-injection hardening as `agy:agy-task`. |
 
 ---
 
@@ -216,7 +217,7 @@ These `.md` files are the source of truth — if this README and a `.md` ever di
 | Plugin | What's inside |
 |---|---|
 | [plugins/agy/](plugins/agy/) | 4 commands (`setup`, `task`, `fanout`, `status`), 1 agent (`agy-task`) |
-| [plugins/cx/](plugins/cx/) | 1 command (`fanout`) |
+| [plugins/cx/](plugins/cx/) | 1 command (`fanout`), 1 agent (`cx-task`) |
 | [plugins/dispatch/](plugins/dispatch/) | 1 command (`fanout`) |
 
 ---

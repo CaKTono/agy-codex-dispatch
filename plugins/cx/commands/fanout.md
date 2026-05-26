@@ -1,30 +1,28 @@
 ---
-description: "Dispatch N independent tasks to Codex in parallel via codex:codex-rescue and aggregate the results. Requires the openai-codex plugin to be installed."
+description: "Dispatch N independent tasks to the codex CLI in parallel via cx:cx-task and aggregate the results. Requires the codex CLI on $PATH."
 argument-hint: "<task1> -- <task2> -- <task3>   (or one task per line, each prefixed with '- ')"
-allowed-tools: Agent, AskUserQuestion
+allowed-tools: Agent, AskUserQuestion, Bash(command:*)
 ---
 
-The user wants to fan out a batch of independent tasks to Codex in parallel.
+The user wants to fan out a batch of independent tasks to the codex CLI in parallel.
 
 Raw input:
 $ARGUMENTS
 
-## Preflight — codex plugin installed?
+## Preflight — codex CLI installed?
 
-If a previous turn already confirmed `codex:codex-rescue` is registered, skip this check.
+Run once:
 
-Otherwise, attempt one `Agent(subagent_type: "codex:codex-rescue", description: "preflight", prompt: "echo READY")` call. If it errors with "unknown subagent type" or similar (i.e. the codex plugin is not installed), stop and tell the user:
+```bash
+command -v codex
+```
 
-> The `cx` plugin depends on OpenAI's `codex` plugin and its `codex:codex-rescue` subagent. Install it first:
->
-> ```
-> claude plugin marketplace add openai/codex-plugin-cc
-> claude plugin install codex@openai-codex
-> ```
->
-> Then restart Claude Code and re-run `/cx:fanout`.
+If empty, stop and tell the user:
 
-Do not attempt the real fan-out until the preflight passes.
+> The `cx` plugin requires OpenAI's Codex CLI to be installed and authenticated.
+> Install from https://developers.openai.com/codex/cli, then run `codex login` once before retrying.
+
+Do not attempt the fan-out until `codex` is on `$PATH`.
 
 ## Parse tasks from $ARGUMENTS
 
@@ -41,21 +39,21 @@ Pick the format based on what the input looks like:
 3. **Single-task fallback** — if neither delimiter is present and the input is non-empty, treat it as a single task. Confirm with `AskUserQuestion` that the user really wants a single-task fan-out (degenerate), offering "Run as single codex task" and "Cancel — I'll re-enter with multiple tasks". Don't proceed unless they confirm.
 4. **Empty input** — use `AskUserQuestion` once to ask for the tasks. Provide "Enter tasks now" and "Cancel".
 
-After parsing, you have an ordered list of N task strings. If N > 4, ask the user once whether to proceed — codex-rescue tasks are heavier than agy and can chew rate-limit quickly.
+After parsing, you have an ordered list of N task strings. If N > 4, ask the user once whether to proceed — codex CLI tasks are heavier than agy and can chew rate-limit quickly.
 
 ## Dispatch
 
 Construct each task prompt with these properties:
 
-- Self-contained — codex sees zero session context, so inline anything it needs.
+- Self-contained — codex sees zero session context, so inline anything it needs (file paths, error messages, decisions).
 - Bake the desired output shape (length, format, JSON, etc.) into the task string itself.
-- Each task is a **fresh thread** — append the literal token `--fresh` to every forwarded prompt so codex-rescue does not resume a prior thread.
-- Prefer foreground execution (do not add `--background`) so this command can aggregate outputs in one response.
+- Each task is a fresh codex session by default (every `codex exec` invocation starts a new session). No flags needed for independence.
+- Foreground only — do not pass any flag that would background the call.
 
 In a **single response message**, issue **N parallel** `Agent` tool calls:
 
 ```
-Agent(subagent_type: "codex:codex-rescue", description: "<short label for task i>", prompt: "<task i> --fresh")
+Agent(subagent_type: "cx:cx-task", description: "<short label for task i>", prompt: "<task i>")
 ```
 
 …one call per parsed task. All in the same message so they run concurrently.
@@ -64,13 +62,13 @@ Agent(subagent_type: "codex:codex-rescue", description: "<short label for task i
 
 After all subagents return:
 
-1. One short header: e.g. "Dispatched 3 tasks to Codex in parallel."
+1. One short header: e.g. "Dispatched 3 tasks to codex in parallel."
 2. Per task in order:
    ```
    ### Task <i>: <short label>
    <verbatim codex stdout>
    ```
-3. If any subagent returned nothing (codex-rescue returns empty on failure per its contract), flag that task at the top of the aggregate.
+3. If any subagent returned an `[codex exited <code>]` line or "codex CLI is not installed", flag that task at the top of the aggregate.
 4. Do NOT paraphrase codex output. Forward it verbatim per task.
 
 ## Don't
@@ -79,6 +77,4 @@ After all subagents return:
 - Don't dispatch sequentially.
 - Don't merge codex outputs into one prose block.
 - Don't add your own analysis unless the user explicitly asked for synthesis.
-- Don't pass `--resume` to fan-out tasks — they must be independent.
-- Don't pass `--effort` or `--model` unless the user requested it; let codex-rescue use defaults.
-- Don't grab review / status / result / cancel — codex-rescue's contract is `task`-only.
+- Don't pass extra flags (`-m`, `-s`, `resume`, etc.) to codex unless the user explicitly requests them — the subagent treats unexplained flags as an error.

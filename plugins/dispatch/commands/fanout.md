@@ -14,7 +14,7 @@ $ARGUMENTS
 | Tag                          | Subagent type used                  | Required plugin                                      |
 |------------------------------|--------------------------------------|------------------------------------------------------|
 | `[agy]`                      | `agy:agy-task`                       | agy plugin (https://github.com/CaKTono/agy-codex-dispatch) |
-| `[codex]`                    | `codex:codex-rescue`                 | openai-codex plugin (append `--fresh` to the prompt) |
+| `[codex]`                    | `cx:cx-task`                         | cx plugin (which itself needs the codex CLI on `$PATH`) |
 | `[claude]`                   | `general-purpose`                    | none (built-in)                                      |
 | `[gemini]`                   | `cc-gemini-plugin:gemini-agent`      | cc-gemini-plugin (optional)                          |
 | `[<exact subagent name>]`    | as-written                           | the named subagent must be registered                |
@@ -50,8 +50,8 @@ Agent(
 ```
 
 Per-target modifiers:
-- `codex` — append `--fresh` to the prompt string so codex-rescue starts a clean thread (required for fan-out independence).
 - `agy` — no modifier.
+- `codex` — no modifier (`codex exec` is a fresh session by default).
 - `claude` — no modifier; the task must be self-contained as the subagent does not inherit this session's context.
 - `gemini` — no modifier.
 
@@ -66,8 +66,8 @@ If any `Agent` call fails with an "unknown subagent type" / "subagent not regist
 - Still present the successful tasks' outputs.
 
 Common missing-plugin pointers:
-- `[agy]` → `claude plugin marketplace add CaKTono/agy-codex-dispatch && claude plugin install agy@caktono-plugins`
-- `[codex]` → `claude plugin marketplace add openai/codex-plugin-cc && claude plugin install codex@openai-codex`
+- `[agy]` → install the agy CLI from https://antigravity.google/product/antigravity-cli, then `claude plugin marketplace add CaKTono/agy-codex-dispatch && claude plugin install agy@caktono-plugins`
+- `[codex]` → install the codex CLI from https://developers.openai.com/codex/cli and run `codex login`, then `claude plugin marketplace add CaKTono/agy-codex-dispatch && claude plugin install cx@caktono-plugins`
 - `[gemini]` → `claude plugin marketplace add thepushkarp/cc-gemini-plugin && claude plugin install cc-gemini-plugin@cc-gemini-plugin`
 
 ## Aggregate
@@ -89,7 +89,6 @@ After all subagents return:
 - Don't infer a target if the user forgot one. Ask.
 - Don't dispatch serially — the whole point is parallel.
 - Don't merge outputs into a single prose block.
-- Don't strip `--fresh` from forwarded codex prompts (or omit adding it).
 - Don't pass `--background` to any target; fan-out aggregates foreground stdout.
 - Don't apply a per-target modifier to the wrong target.
 
@@ -103,6 +102,6 @@ Input:
 ```
 
 Dispatched as 3 parallel `Agent` calls:
-- `subagent_type: "agy:agy-task"`        ← task 1 prompt verbatim
-- `subagent_type: "codex:codex-rescue"`  ← task 2 prompt + ` --fresh`
-- `subagent_type: "general-purpose"`     ← task 3 prompt verbatim
+- `subagent_type: "agy:agy-task"`    ← task 1 prompt verbatim
+- `subagent_type: "cx:cx-task"`      ← task 2 prompt verbatim
+- `subagent_type: "general-purpose"` ← task 3 prompt verbatim
