@@ -17,7 +17,7 @@ You can install **any subset**. Each plugin is self-contained and only reference
 Copy-paste this once:
 
 ```bash
-claude plugin marketplace add CaKTono/claude-plugins && \
+claude plugin marketplace add CaKTono/agy-codex-dispatch && \
   claude plugin install agy@caktono-plugins && \
   claude plugin install cx@caktono-plugins && \
   claude plugin install dispatch@caktono-plugins
@@ -30,7 +30,7 @@ Then restart Claude Code. All `/agy:*`, `/cx:*`, `/dispatch:*` commands appear i
 Add the marketplace once, then pick whichever plugins you actually need:
 
 ```bash
-claude plugin marketplace add CaKTono/claude-plugins
+claude plugin marketplace add CaKTono/agy-codex-dispatch
 
 # Install any subset:
 claude plugin install agy@caktono-plugins        # Antigravity wrapper
@@ -47,8 +47,8 @@ Restart Claude Code afterwards.
 For testing or contributing:
 
 ```bash
-git clone https://github.com/CaKTono/claude-plugins.git
-claude plugin marketplace add ./claude-plugins
+git clone https://github.com/CaKTono/agy-codex-dispatch.git
+claude plugin marketplace add ./agy-codex-dispatch
 claude plugin install agy@caktono-plugins   # plus cx, dispatch as desired
 ```
 

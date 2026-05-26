@@ -13,7 +13,7 @@ $ARGUMENTS
 
 | Tag                          | Subagent type used                  | Required plugin                                      |
 |------------------------------|--------------------------------------|------------------------------------------------------|
-| `[agy]`                      | `agy:agy-task`                       | agy plugin (https://github.com/CaKTono/claude-plugins) |
+| `[agy]`                      | `agy:agy-task`                       | agy plugin (https://github.com/CaKTono/agy-codex-dispatch) |
 | `[codex]`                    | `codex:codex-rescue`                 | openai-codex plugin (append `--fresh` to the prompt) |
 | `[claude]`                   | `general-purpose`                    | none (built-in)                                      |
 | `[gemini]`                   | `cc-gemini-plugin:gemini-agent`      | cc-gemini-plugin (optional)                          |
@@ -66,7 +66,7 @@ If any `Agent` call fails with an "unknown subagent type" / "subagent not regist
 - Still present the successful tasks' outputs.
 
 Common missing-plugin pointers:
-- `[agy]` → `claude plugin marketplace add CaKTono/claude-plugins && claude plugin install agy@caktono-plugins`
+- `[agy]` → `claude plugin marketplace add CaKTono/agy-codex-dispatch && claude plugin install agy@caktono-plugins`
 - `[codex]` → `claude plugin marketplace add openai/codex-plugin-cc && claude plugin install codex@openai-codex`
 - `[gemini]` → `claude plugin marketplace add thepushkarp/cc-gemini-plugin && claude plugin install cc-gemini-plugin@cc-gemini-plugin`
 
