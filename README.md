@@ -4,7 +4,7 @@ Three small Claude Code plugins that work together to make **multi-model dispatc
 
 | Plugin | What it gives you | Depends on |
 |---|---|---|
-| **agy** | `/agy:setup`, `/agy:task`, `/agy:fanout`, `/agy:status`, `/agy:model` — wraps the [Antigravity](https://antigravity.google) (`agy`) CLI. | `agy` binary on `$PATH` |
+| **agy** | `/agy:setup`, `/agy:task`, `/agy:fanout`, `/agy:status` — wraps the [Antigravity](https://antigravity.google) (`agy`) CLI. | `agy` binary on `$PATH` |
 | **cx** | `/cx:fanout` — fans out N tasks to OpenAI's `codex:codex-rescue` in parallel. | OpenAI's [codex plugin](https://github.com/openai/codex-plugin-cc) |
 | **dispatch** | `/dispatch:fanout` — explicit per-task routing via `[agy]` / `[codex]` / `[claude]` / `[gemini]` tags. | nothing required; recognized tags need their respective plugins installed |
 
@@ -91,7 +91,7 @@ All commands are namespaced per plugin: `/agy:<name>`, `/cx:<name>`, `/dispatch:
 Runs health checks for the `agy` CLI and its network path to Google. Reports a ✓/✗ punch list with suggested fixes on failure. Optionally probes mihomo-specific TUN routing if mihomo is detected on the host.
 
 - **Arguments:** none
-- **What it checks:** binary present → version → Google OAuth reachability → eligibility endpoint → active model self-report. Mihomo TUN routing + fake-IP DNS are checked only if mihomo is detected.
+- **What it checks:** binary present → version → Google OAuth reachability → eligibility endpoint. Mihomo TUN routing + fake-IP DNS are checked only if mihomo is detected.
 - **Output shape:** one line per check (`✓` / `✗` + name + one-line reason), then a single suggestion line if anything failed, or `All clear — try /agy:task to delegate work.` if everything passed.
 
 #### `/agy:task [--continue] <prompt>`
@@ -133,13 +133,7 @@ Prints `agy`'s install path, version, and recent activity hints. Brief — under
 
 - **Arguments:** none
 
-#### `/agy:model`
-
-Probes agy for the currently active model via a self-report query, and lists the known picker entries (Gemini 3.5 Flash Low/Medium/High, Gemini 3.1 Pro Low/High, Claude Sonnet/Opus 4.6 Thinking, GPT-OSS 120B Medium).
-
-- **Arguments:** none
-- **Cannot switch the model from this command.** `agy` has no `--model` flag, no env var, and no local config file for model selection — the picker is interactive-only and the choice is stored server-side per Google account.
-- **To switch:** start agy interactively (`agy` with no flags, or `agy -i "<initial prompt>"`) and type `/model` to open the model picker. Use arrow keys to select, enter to confirm. The new choice persists across future `agy --print` calls until you change it again.
+> **Model selection note.** `agy` has no `--model` CLI flag, no env var, and no local config file. To switch between Gemini / Claude / GPT-OSS models inside agy, run `agy` interactively (no flags) and type `/model` to open the model picker — arrow keys to select, enter to confirm. The choice persists across future `agy --print` calls. This plugin deliberately does **not** ship a `/agy:model` command, because the only programmatic probe available (asking the LLM to self-identify) reliably lies.
 
 ---
 
@@ -221,7 +215,7 @@ These `.md` files are the source of truth — if this README and a `.md` ever di
 
 | Plugin | What's inside |
 |---|---|
-| [plugins/agy/](plugins/agy/) | 5 commands (`setup`, `task`, `fanout`, `status`, `model`), 1 agent (`agy-task`) |
+| [plugins/agy/](plugins/agy/) | 4 commands (`setup`, `task`, `fanout`, `status`), 1 agent (`agy-task`) |
 | [plugins/cx/](plugins/cx/) | 1 command (`fanout`) |
 | [plugins/dispatch/](plugins/dispatch/) | 1 command (`fanout`) |
 
