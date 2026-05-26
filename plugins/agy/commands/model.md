@@ -13,11 +13,10 @@ Run `command -v agy`. If empty, report ✗ "agy not installed — run /agy:setup
 
 ## Step 2 — Probe the active model
 
-Run exactly this command (the prompt is crafted to discourage chattiness and to ask for the picker label, not the LLM's self-name):
+Run exactly this command (the prompt is crafted to discourage chattiness and to ask for the picker label, not the LLM's self-name). Do **not** add `--print-timeout` or `--` — they have triggered argv-parsing oddities in past agy versions and caused the prompt to be misinterpreted as a flag-docs query.
 
 ```bash
-timeout 60 agy --print --print-timeout 50s \
-  "Output exactly one line and nothing else: the model display label as it appears in your model picker (e.g. 'Gemini 3.5 Flash (High)' or 'Claude Opus 4.6 (Thinking)'). No quotes, no preamble, no explanation."
+timeout 60 agy --print "Output exactly one line and nothing else: the model display label as it appears in your model picker (e.g. Gemini 3.5 Flash (High) or Claude Opus 4.6 (Thinking)). No quotes, no preamble, no explanation."
 ```
 
 Trim the result. If it looks like a model label (matches one of the known picker entries listed below, or close to one), present it as: `Active model (best-effort): <label>`.
@@ -43,7 +42,7 @@ Known agy model picker entries (subject to availability per account):
 
 End with a single line:
 
-> To switch the active model, start agy interactively (`agy` or `agy -i "<initial prompt>"`) and use the model picker from agy's UI. There is no headless / CLI / scripted way to change the model — agy stores the choice on Google's side, not locally.
+> To switch the active model, start agy interactively (`agy` with no flags, or `agy -i "<initial prompt>"`) and type `/model` to open the model picker. Arrow keys to select, enter to confirm. The new choice persists across future `agy --print` calls until you change it again. There is no headless / CLI / scripted way to change the model — agy stores the choice on Google's side, not locally.
 
 ## Don't
 

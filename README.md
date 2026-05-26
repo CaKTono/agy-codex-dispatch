@@ -78,18 +78,7 @@ Runs health checks for the `agy` CLI and its network path to Google. Reports a �
 
 - **Arguments:** none
 - **What it checks:** binary present → version → Google OAuth reachability → eligibility endpoint → active model self-report. Mihomo TUN routing + fake-IP DNS are checked only if mihomo is detected.
-
-Example output:
-
-```
-✓ Binary present (agy at /home/.../bin/agy)
-✓ agy version: 1.x.x
-✓ Google OAuth reachability: 401 in 1.2s
-✓ Eligibility endpoint reachability: 401 in 1.4s
-✓ Active model (best-effort): Claude Opus 4.6 (Thinking)
-(mihomo not detected — skipped TUN/fake-IP checks)
-All clear — try /agy:task to delegate work.
-```
+- **Output shape:** one line per check (`✓` / `✗` + name + one-line reason), then a single suggestion line if anything failed, or `All clear — try /agy:task to delegate work.` if everything passed.
 
 #### `/agy:task [--continue] <prompt>`
 
@@ -135,7 +124,8 @@ Prints `agy`'s install path, version, and recent activity hints. Brief — under
 Probes agy for the currently active model via a self-report query, and lists the known picker entries (Gemini 3.5 Flash Low/Medium/High, Gemini 3.1 Pro Low/High, Claude Sonnet/Opus 4.6 Thinking, GPT-OSS 120B Medium).
 
 - **Arguments:** none
-- **Cannot switch the model.** `agy` has no `--model` flag, no env var, and no local config file for model selection — the picker is interactive-only and the choice is stored server-side per Google account. To change models, run `agy` interactively and use the picker.
+- **Cannot switch the model from this command.** `agy` has no `--model` flag, no env var, and no local config file for model selection — the picker is interactive-only and the choice is stored server-side per Google account.
+- **To switch:** start agy interactively (`agy` with no flags, or `agy -i "<initial prompt>"`) and type `/model` to open the model picker. Use arrow keys to select, enter to confirm. The new choice persists across future `agy --print` calls until you change it again.
 
 ---
 
